@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>This Portfolio Case Study | Aondona Phinehas</title>
+    <meta name="description"
+        content="How I built scroll-triggered reveal animations for this portfolio with zero dependencies, using IntersectionObserver instead of a scroll listener, and respecting prefers-reduced-motion." />
+    <link rel="stylesheet" href="../css/styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@700;800&display=swap"
+        rel="stylesheet" />
+</head>
+
+<body>
+
+    <!-- NAV -->
+    <nav class="site-nav" id="siteNav">
+        <div class="nav-inner">
+            <a href="../index.html#hero" class="nav-wordmark">AP<span class="nav-dot">.</span></a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about">About</a></li>
+                <li><a href="../index.html#services">Services</a></li>
+                <li><a href="../index.html#stack">Stack</a></li>
+                <li><a href="../index.html#projects">Work</a></li>
+                <li><a href="../index.html#contact" class="nav-cta-link">Hire Me</a></li>
+            </ul>
+            <button class="nav-hamburger" id="navHamburger" aria-label="Toggle menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- CASE HERO -->
+    <section class="case-hero">
+        <div class="container case-hero-inner">
+            <a href="../index.html#projects" class="case-back-link">← All Projects</a>
+            <div class="case-accent-line" aria-hidden="true"></div>
+            <p class="case-eyebrow">Case Study · 03</p>
+            <h1 class="case-title">This Portfolio</h1>
+            <p class="case-summary">
+                Built from scratch with no frameworks and no templates, as a direct demonstration of
+                frontend discipline, performance thinking, and psychology-driven UX, down to how and when
+                things animate on screen.
+            </p>
+            <div class="case-meta-row">
+                <div class="project-tags">
+                    <span class="tag">HTML5</span>
+                    <span class="tag">CSS3</span>
+                    <span class="tag">Vanilla JS</span>
+                    <span class="tag">UX Design</span>
+                </div>
+                <div class="project-outcome-badge">
+                    <span class="outcome-label">Outcome</span>
+                    <span class="outcome-value">Proof of Craft</span>
+                </div>
+            </div>
+            <div class="case-links">
+                <a href="../index.html" class="btn btn-sm btn-primary">Back to Home →</a>
+                <span class="case-note">You're already looking at the live site.</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- STORY -->
+    <section class="section-pad">
+        <div class="container">
+            <div class="case-section">
+
+                <article class="case-step">
+                    <span class="case-step-marker">01</span>
+                    <h2 class="case-step-title">The Challenge</h2>
+                    <div class="case-narrative">
+                        <p>
+                            I wanted scroll-triggered reveal animations, elements fading and lifting into
+                            place as you scroll down, without pulling in a single animation library. That
+                            was a rule I set for this project: zero dependencies, which meant no GSAP, no
+                            ScrollTrigger, nothing installed.
+                        </p>
+                        <p>
+                            The naive way to detect "has this element scrolled into view" is a scroll
+                            event listener that checks every tracked element's position on every scroll
+                            tick. That runs dozens of times a second, on every pixel of scroll, checking
+                            geometry for every section on the page. It works, but it's exactly the kind of
+                            janky, battery-draining pattern that undermines a project whose whole pitch is
+                            performance thinking.
+                        </p>
+                        <p>
+                            There was a second requirement hiding inside the first one: some visitors set
+                            their operating system to reduce motion because animation causes them
+                            discomfort or distraction. A portfolio that ignores that setting isn't
+                            accessible, no matter how smooth the animation looks to everyone else.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="case-step">
+                    <span class="case-step-marker">02</span>
+                    <h2 class="case-step-title">How I Fixed It</h2>
+                    <div class="case-narrative">
+                        <p>
+                            I replaced the scroll listener with the <strong>IntersectionObserver</strong>
+                            API, which lets the browser tell me when an element enters the viewport
+                            instead of me polling for it. Each revealable section gets tagged once on
+                            load, one observer watches all of them, and the moment an element crosses the
+                            visibility threshold, it gets a "visible" class and the observer stops
+                            watching that element, since it only needs to reveal once.
+                        </p>
+                        <p>
+                            For motion sensitivity, the reveal transition lives inside a
+                            <code>prefers-reduced-motion</code> media query. If a visitor has that setting
+                            on, the transition is removed entirely and every element appears instantly in
+                            its final position. No missing content, no waiting on an animation that never
+                            runs the way they expect.
+                        </p>
+                    </div>
+                    <div class="case-fix-block">
+                        <div class="hero-code-block">
+                            <div class="code-bar">
+                                <span class="dot red"></span><span class="dot yellow"></span><span
+                                    class="dot green"></span>
+                                <span class="code-filename">script.js</span>
+                            </div>
+                            <pre class="code-body"><code><span class="c-keyword">const</span> <span class="c-var">revealObserver</span> = <span class="c-keyword">new</span> IntersectionObserver(
+  (entries) => {
+    entries.<span class="c-var">forEach</span>(entry => {
+      <span class="c-keyword">if</span> (entry.isIntersecting) {
+        entry.target.classList.<span class="c-var">add</span>(<span class="c-str">'visible'</span>);
+        <span class="c-key">// stop watching once it has revealed</span>
+        revealObserver.<span class="c-var">unobserve</span>(entry.target);
+      }
+    });
+  },
+  { <span class="c-key">threshold</span>: <span class="c-bool">0.12</span> }
+);</code></pre>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="case-step">
+                    <span class="case-step-marker">03</span>
+                    <h2 class="case-step-title">What Changed</h2>
+                    <ul class="case-outcome-list">
+                        <li>Scroll reveal costs one observer, not a scroll listener firing dozens of times
+                            a second</li>
+                        <li>Each element stops being watched once it has revealed, keeping the observer
+                            lightweight as the page grows</li>
+                        <li>Motion-sensitive visitors get the same content instantly, with no animation
+                            forced on them</li>
+                    </ul>
+                    <p class="case-lesson">
+                        The lesson: a smooth animation and a fast, accessible page aren't a trade-off once
+                        you pick the right browser API. You just have to know it exists before reaching
+                        for a library.
+                    </p>
+                </article>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- CROSS LINKS -->
+    <div class="container">
+        <div class="case-nav-footer">
+            <a href="academic.html">
+                <span class="case-nav-footer-label">← Previous</span>
+                <span class="case-nav-footer-title">Academic Publications Platform</span>
+            </a>
+            <a href="storytelling.html">
+                <span class="case-nav-footer-label">Next →</span>
+                <span class="case-nav-footer-title">Storytelling Platform</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-inner">
+                <span class="footer-wordmark">AP<span class="nav-dot">.</span></span>
+                <p class="footer-copy">© <span id="footerYear"></span> Aondona Phinehas. Built with intent.</p>
+                <div class="footer-links">
+                    <a href="https://github.com/Mtsegh" target="_blank" rel="noopener">GitHub</a>
+                    <a href="https://www.linkedin.com/in/phinehas-aondona-29b6482a4" target="_blank"
+                        rel="noopener">LinkedIn</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/script.js"></script>
+</body>
+
+</html>

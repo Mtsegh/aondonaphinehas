@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Storytelling Platform Case Study | Aondona Phinehas</title>
+    <meta name="description"
+        content="How I closed an XSS hole in GettyStories, a Medium-style publishing platform, by sanitizing user generated HTML at the data boundary instead of trusting the editor." />
+    <link rel="stylesheet" href="../css/styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@700;800&display=swap"
+        rel="stylesheet" />
+</head>
+
+<body>
+
+    <!-- NAV -->
+    <nav class="site-nav" id="siteNav">
+        <div class="nav-inner">
+            <a href="../index.html#hero" class="nav-wordmark">AP<span class="nav-dot">.</span></a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about">About</a></li>
+                <li><a href="../index.html#services">Services</a></li>
+                <li><a href="../index.html#stack">Stack</a></li>
+                <li><a href="../index.html#projects">Work</a></li>
+                <li><a href="../index.html#contact" class="nav-cta-link">Hire Me</a></li>
+            </ul>
+            <button class="nav-hamburger" id="navHamburger" aria-label="Toggle menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- CASE HERO -->
+    <section class="case-hero">
+        <div class="container case-hero-inner">
+            <a href="../index.html#projects" class="case-back-link">← All Projects</a>
+            <div class="case-accent-line" aria-hidden="true"></div>
+            <p class="case-eyebrow">Case Study · 01</p>
+            <h1 class="case-title">Storytelling Platform</h1>
+            <p class="case-summary">
+                GettyStories is a Medium-style publishing platform for writers and readers, built to turn
+                one-time visits into daily habits with author tools, bookmarks, subscriptions, and an
+                engagement system that keeps people coming back.
+            </p>
+            <div class="case-meta-row">
+                <div class="project-tags">
+                    <span class="tag">React</span>
+                    <span class="tag">Node.js</span>
+                    <span class="tag">Express</span>
+                    <span class="tag">MongoDB</span>
+                    <span class="tag">Tailwind CSS</span>
+                </div>
+                <div class="project-outcome-badge">
+                    <span class="outcome-label">Outcome</span>
+                    <span class="outcome-value">↑ Retention & Engagement</span>
+                </div>
+            </div>
+            <div class="case-links">
+                <a href="https://gettystories.onrender.com" target="_blank" rel="noopener"
+                    class="btn btn-sm btn-primary">Live Demo →</a>
+                <a href="https://github.com/Mtsegh/blog-app" target="_blank" rel="noopener"
+                    class="btn btn-sm btn-ghost">Source</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- STORY -->
+    <section class="section-pad">
+        <div class="container">
+            <div class="case-section">
+
+                <article class="case-step">
+                    <span class="case-step-marker">01</span>
+                    <h2 class="case-step-title">The Challenge</h2>
+                    <div class="case-narrative">
+                        <p>
+                            GettyStories needed a rich text editor so writers could format stories with
+                            headings, bold text, links, and inline images, the same way any modern
+                            publishing tool works. I wired up Quill for that piece, and it worked well
+                            immediately: writers typed, formatted, and their story rendered back exactly
+                            as written.
+                        </p>
+                        <p>
+                            The problem showed up once I looked at what actually got saved. Quill hands
+                            back raw HTML, and that HTML was going straight into the database and straight
+                            back out to every reader who opened the story. Nothing stood between what a
+                            writer typed and what every visitor's browser executed. A story containing a
+                            stray image tag with a broken <code>onerror</code> attribute, or a pasted
+                            script tag, would run in the browser of anyone who opened it, silently, with
+                            no warning to the reader or the writer.
+                        </p>
+                        <p>
+                            On a platform whose entire pitch is trust and daily return visits, that
+                            <strong>is not a small bug</strong>. It's a way for one bad actor to
+                            compromise every reader who clicks a single story.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="case-step">
+                    <span class="case-step-marker">02</span>
+                    <h2 class="case-step-title">How I Fixed It</h2>
+                    <div class="case-narrative">
+                        <p>
+                            I moved the security decision from the editor to the data boundary. Instead of
+                            trusting whatever HTML the rich text editor produced, I sanitized story content
+                            on the way in, before it ever reached the database, stripping script tags,
+                            inline event handlers such as <code>onerror</code> and <code>onclick</code>,
+                            and anything outside an explicit allowlist of formatting tags: headings, bold,
+                            italics, links, images, and lists.
+                        </p>
+                        <p>
+                            I sanitized again on the way out, so stories saved before the fix would still
+                            render safely. Then I tested it the way an attacker would: pasted script tags,
+                            malformed image tags, <code>javascript:</code> links, and encoded payloads,
+                            checking that each one rendered as plain, harmless text instead of executing.
+                        </p>
+                    </div>
+                    <div class="case-fix-block">
+                        <div class="hero-code-block">
+                            <div class="code-bar">
+                                <span class="dot red"></span><span class="dot yellow"></span><span
+                                    class="dot green"></span>
+                                <span class="code-filename">sanitizeStory.js</span>
+                            </div>
+                            <pre class="code-body"><code><span class="c-keyword">function</span> <span class="c-var">sanitizeStoryHtml</span>(rawHtml) {
+  <span class="c-keyword">return</span> <span class="c-var">sanitizeHtml</span>(rawHtml, {
+    <span class="c-key">allowedTags</span>: [<span class="c-str">'h1'</span>, <span class="c-str">'h2'</span>, <span class="c-str">'p'</span>, <span class="c-str">'b'</span>, <span class="c-str">'i'</span>, <span class="c-str">'a'</span>, <span class="c-str">'img'</span>, <span class="c-str">'ul'</span>, <span class="c-str">'li'</span>],
+    <span class="c-key">allowedAttributes</span>: { <span class="c-key">a</span>: [<span class="c-str">'href'</span>], <span class="c-key">img</span>: [<span class="c-str">'src'</span>, <span class="c-str">'alt'</span>] },
+    <span class="c-key">disallowedTagsMode</span>: <span class="c-str">'discard'</span>
+  });
+}
+<span class="c-keyword">const</span> <span class="c-var">safe</span> = <span class="c-var">sanitizeStoryHtml</span>(story.body);</code></pre>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="case-step">
+                    <span class="case-step-marker">03</span>
+                    <h2 class="case-step-title">What Changed</h2>
+                    <ul class="case-outcome-list">
+                        <li>Every story is sanitized on write and on read, so a future editor change can't
+                            reopen the hole on its own</li>
+                        <li>Verified against common XSS payloads before shipping the fix</li>
+                        <li>Reader trust protected without changing how writers use the editor at all</li>
+                    </ul>
+                    <p class="case-lesson">
+                        The lesson was simple: never trust a friendly editor to produce safe output.
+                        Sanitize at the data boundary, not at the source.
+                    </p>
+                </article>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- CROSS LINKS -->
+    <div class="container">
+        <div class="case-nav-footer">
+            <a href="portfolio.html">
+                <span class="case-nav-footer-label">← Previous</span>
+                <span class="case-nav-footer-title">This Portfolio</span>
+            </a>
+            <a href="academic.html">
+                <span class="case-nav-footer-label">Next →</span>
+                <span class="case-nav-footer-title">Academic Publications Platform</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-inner">
+                <span class="footer-wordmark">AP<span class="nav-dot">.</span></span>
+                <p class="footer-copy">© <span id="footerYear"></span> Aondona Phinehas. Built with intent.</p>
+                <div class="footer-links">
+                    <a href="https://github.com/Mtsegh" target="_blank" rel="noopener">GitHub</a>
+                    <a href="https://www.linkedin.com/in/phinehas-aondona-29b6482a4" target="_blank"
+                        rel="noopener">LinkedIn</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/script.js"></script>
+</body>
+
+</html>
