@@ -65,6 +65,34 @@ const revealObserver = new IntersectionObserver(
 document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
 /* =========================================
+     CAROUSEL FALLBACK BUTTONS
+     (shown when CSS scroll buttons unsupported)
+     ========================================= */
+document.querySelectorAll('.carousel').forEach(carousel => {
+    const supportsScrollButtons = CSS.supports('selector(::scroll-button(right))');
+    if (supportsScrollButtons) return;
+
+    const prevBtn = document.createElement('button');
+    const nextBtn = document.createElement('button');
+    prevBtn.className = 'carousel-btn carousel-btn-prev';
+    nextBtn.className = 'carousel-btn carousel-btn-next';
+    prevBtn.textContent = '\u2190';
+    nextBtn.textContent = '\u2192';
+    prevBtn.setAttribute('aria-label', 'Previous items');
+    nextBtn.setAttribute('aria-label', 'Next items');
+    carousel.before(prevBtn);
+    carousel.after(nextBtn);
+
+    const step = () => {
+        const card = carousel.querySelector('.card');
+        return card ? card.getBoundingClientRect().width + 16 : 300;
+    };
+
+    prevBtn.addEventListener('click', () => carousel.scrollBy({ left: -step(), behavior: 'smooth' }));
+    nextBtn.addEventListener('click', () => carousel.scrollBy({ left: step(), behavior: 'smooth' }));
+});
+
+/* =========================================
      ACTIVE NAV LINK ON SCROLL
      ========================================= */
 const sectionIds = ['hero', 'about', 'services', 'stack', 'projects', 'contact'];
