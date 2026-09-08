@@ -129,6 +129,9 @@ ul {
     transition: background var(--transition-fast), color var(--transition-fast),
         box-shadow var(--transition-fast), transform var(--transition-fast);
     white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .btn:active {
@@ -721,6 +724,8 @@ code {
     display: flex;
     gap: 12px;
     flex-shrink: 0;
+    flex-wrap: wrap;
+    min-width: 0;
 }
 
 /* =========================================
@@ -1143,7 +1148,7 @@ code {
     border: 1px solid var(--color-border);
     text-align: center;
     align-content: center;
-    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 .card::scroll-marker {
@@ -1169,6 +1174,14 @@ code {
 @media (max-width: 640px) {
     .card {
         flex: 0 0 100%;
+    }
+
+    /* Native scroll buttons are position:fixed and land on top of the
+       cards on small screens; hide them and rely on touch scrolling
+       (the JS fallback buttons stack outside the track instead). */
+    .carousel::scroll-button(right),
+    .carousel::scroll-button(left) {
+        display: none;
     }
 }
 
