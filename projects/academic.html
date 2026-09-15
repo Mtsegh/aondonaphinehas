@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Academic Publications Platform Case Study | Aondona Phinehas</title>
+    <meta name="description"
+        content="How I kept a 200+ entry publication list current without an official Google Scholar API, by treating scraped data as a periodic sync instead of a live request." />
+    <link rel="stylesheet" href="../css/styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+</head>
+
+<body>
+
+    <!-- NAV -->
+    <nav class="site-nav" id="siteNav">
+        <div class="nav-inner">
+            <a href="../index.html#hero" class="nav-wordmark">AP<span class="nav-dot">.</span></a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html#about">About</a></li>
+                <li><a href="../index.html#services">Services</a></li>
+                <li><a href="../index.html#stack">Stack</a></li>
+                <li><a href="../index.html#projects">Work</a></li>
+                <li><a href="../index.html#contact" class="nav-cta-link">Hire Me</a></li>
+            </ul>
+            <button class="nav-hamburger" id="navHamburger" aria-label="Toggle menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- CASE HERO -->
+    <section class="case-hero">
+        <div class="container case-hero-inner">
+            <a href="../index.html#projects" class="case-back-link">← All Projects</a>
+            <div class="case-accent-line" aria-hidden="true"></div>
+            <p class="case-eyebrow">Case Study · 02</p>
+            <h1 class="case-title">Academic Publications Platform</h1>
+            <p class="case-summary">
+                A research and publications platform built for Prof. Aondona Paul Ihom, bringing 200+
+                journal publications, authored books, and ongoing research under one roof, with a
+                monetization option and an admin dashboard that cut manual upkeep to almost nothing.
+            </p>
+            <div class="case-meta-row">
+                <div class="project-tags">
+                    <span class="tag">React</span>
+                    <span class="tag">Node.js</span>
+                    <span class="tag">Django</span>
+                    <span class="tag">Paystack API</span>
+                </div>
+                <div class="project-outcome-badge">
+                    <span class="outcome-label">Outcome</span>
+                    <span class="outcome-value">↓ Manual Work · ↑ Visibility</span>
+                </div>
+            </div>
+            <div class="case-links">
+                <a href="https://profapihom.com" target="_blank" rel="noopener"
+                    class="btn btn-sm btn-primary">Live Demo →</a>
+                <a href="https://github.com/Mtsegh/professor_app" target="_blank" rel="noopener"
+                    class="btn btn-sm btn-ghost">Source</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- STORY -->
+    <section class="section-pad">
+        <div class="container">
+            <div class="case-section">
+
+                <article class="case-step">
+                    <span class="case-step-marker">01</span>
+                    <h2 class="case-step-title">The Challenge</h2>
+                    <div class="case-narrative">
+                        <p>
+                            The professor's publication list runs past 200 entries and keeps growing every
+                            time a new paper is indexed on Google Scholar. Re-typing that list by hand
+                            every time a paper comes out was exactly the manual overhead this project was
+                            meant to remove.
+                        </p>
+                        <p>
+                            The obvious fix, pulling the list straight from Google Scholar, runs into a
+                            hard limit: <strong>Google Scholar has no official public API</strong>. Any
+                            automated way of reading it means scraping a page built for humans, not
+                            scripts, and Google actively rate-limits and blocks requests that look
+                            automated. Build that naively, on every page load, and the public site either
+                            shows a stale, half-loaded list or breaks outright the moment Google throttles
+                            the request.
+                        </p>
+                        <p>
+                            That is not acceptable on a site tied to someone's academic reputation. It
+                            needed to look current at all times, not only when the scrape happened to
+                            succeed.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="case-step">
+                    <span class="case-step-marker">02</span>
+                    <h2 class="case-step-title">How I Fixed It</h2>
+                    <div class="case-narrative">
+                        <p>
+                            I stopped treating Google Scholar as a live data source and started treating
+                            it as a periodic import. A scheduled sync job pulls the publication list on
+                            its own schedule, independent of any visitor's request, and writes the results
+                            into the platform's own database. Visitors always read from that database,
+                            never from Google directly, so a blocked or slow scrape never becomes a
+                            visitor-facing error.
+                        </p>
+                        <p>
+                            I paired that with a fallback in the admin dashboard: if a sync fails, or a new
+                            paper needs to show up before the next scheduled run, the professor can add or
+                            edit a publication entry by hand. The public page never depends on the scrape
+                            succeeding in order to look complete.
+                        </p>
+                    </div>
+                    <div class="case-fix-block">
+                        <div class="hero-code-block">
+                            <div class="code-bar">
+                                <span class="dot red"></span><span class="dot yellow"></span><span
+                                    class="dot green"></span>
+                                <span class="code-filename">syncPublications.js</span>
+                            </div>
+                            <pre class="code-body"><code><span class="c-keyword">async function</span> <span class="c-var">syncPublications</span>() {
+  <span class="c-keyword">try</span> {
+    <span class="c-keyword">const</span> <span class="c-var">results</span> = <span class="c-keyword">await</span> scholarScraper.<span class="c-var">fetchLatest</span>(profileId);
+    <span class="c-keyword">await</span> Publication.<span class="c-var">bulkUpsert</span>(results);
+  } <span class="c-keyword">catch</span> (err) {
+    logger.<span class="c-var">warn</span>(<span class="c-str">'Scholar sync failed, keeping last known list'</span>, err);
+  }
+}
+<span class="c-key">// Runs on a schedule, never on the request path</span>
+cron.<span class="c-var">schedule</span>(<span class="c-str">'0 3 * * *'</span>, syncPublications);</code></pre>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="case-step">
+                    <span class="case-step-marker">03</span>
+                    <h2 class="case-step-title">What Changed</h2>
+                    <ul class="case-outcome-list">
+                        <li>The publication list stays current without daily manual re-entry from the
+                            professor</li>
+                        <li>A blocked or failed sync never shows up as a broken page to visitors</li>
+                        <li>The professor can override or add entries directly through the admin dashboard
+                            whenever needed</li>
+                    </ul>
+                    <p class="case-lesson">
+                        The lesson here: when a third-party source can't be trusted to answer instantly and
+                        reliably, don't put it on the request path. Sync it in the background and let your
+                        own database be the source of truth.
+                    </p>
+                </article>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- CROSS LINKS -->
+    <div class="container">
+        <div class="case-nav-footer">
+            <a href="storytelling.html">
+                <span class="case-nav-footer-label">← Previous</span>
+                <span class="case-nav-footer-title">Storytelling Platform</span>
+            </a>
+            <a href="portfolio.html">
+                <span class="case-nav-footer-label">Next →</span>
+                <span class="case-nav-footer-title">This Portfolio</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-inner">
+                <span class="footer-wordmark">AP<span class="nav-dot">.</span></span>
+                <p class="footer-copy">© <span id="footerYear"></span> Aondona Phinehas. Built with intent.</p>
+                <div class="footer-links">
+                    <a href="https://github.com/Mtsegh" target="_blank" rel="noopener">GitHub</a>
+                    <a href="https://www.linkedin.com/in/phinehas-aondona-29b6482a4" target="_blank"
+                        rel="noopener">LinkedIn</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/script.js"></script>
+</body>
+
+</html>
